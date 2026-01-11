@@ -1,27 +1,39 @@
-from flask import Flask, jsonify, request
+"""Main Flask app entry point."""
+
+from flask import Flask, jsonify
 from flask_cors import CORS
 from .config import config
-from .backboard_client import run_coroutine, ensure_thread, send_message
+from .routes import chat_bp, med_bp, appointment_bp, request_bp, auth_bp
 
 def create_app():
+    """Create and configure Flask app."""
     app = Flask(__name__)
     app.config.from_object(config)
+    
+    # Enable CORS for all API routes
     CORS(app, resources={r"/api/*": {"origins": "*"}})
-
+    
+    # Health check
     @app.get("/api/health")
     def health():
-        return jsonify({"status": "ok"})
-
-    @app.post("/api/chat")
-    def chat():
-        data = request.get_json() or {}
-        user_id = data.get("userId")
-        message = data.get("message", "")
-        # later: look up per-user thread in DB; for now, create a new one
-        thread = run_coroutine(ensure_thread(config.BACKBOARD_ASSISTANT_ID))
-        reply = run_coroutine(send_message(thread.thread_id, message))
-        return jsonify({"reply": reply, "threadId": thread.thread_id})
-
+        return jsonify({"status": "ok", "environment": config.ENV})
+    
+    # Register blueprints
+    app.register_blueprint(chat_bp)
+    app.register_blueprint(med_bp)
+    app.register_blueprint(appointment_bp)
+    app.register_blueprint(request_bp)
+    app.register_blueprint(auth_bp)
+    
+    # Global error handler
+    @app.errorhandler(404)
+    def not_found(e):
+        return jsonify({"error": "Not found"}), 404
+    
+    @app.errorhandler(500)
+    def internal_error(e):
+        return jsonify({"error": "Internal server error"}), 500
+    
     return app
 
 app = create_app()

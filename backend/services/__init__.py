@@ -1,6 +1,13 @@
-"""Business logic services for ElderCare Companion."""
+"""Services package – export all service modules."""
 
-from .medication_service import medication_service
-from .appointment_service import appointment_service
+from . import safety_service
+from . import medication_service
+from . import appointment_service
+from . import request_service
 
-__all__ = ["medication_service", "appointment_service"]
+__all__ = [
+    "safety_service",
+    "medication_service",
+    "appointment_service",
+    "request_service",
+]
